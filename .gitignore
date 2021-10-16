@@ -38,3 +38,7 @@ build/
 
 #VS code
 .vscode
+
+#bin folder
+bin
+bin/*/
