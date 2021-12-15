@@ -19,8 +19,12 @@
  * Finally, we will solve the follow up.
  */
 
-#include <iostream>
-#include <cmath>
+#define FMT_HEADER_ONLY
+
+#include <bits/stdc++.h>
+#include <fmt/core.h>
+
+using namespace std;
 
 struct Node
 {
@@ -269,6 +273,7 @@ Node *my_add(Node *list1, Node *list2)
   long nbone{0}, nbtwo{0}, sum{0}, firstDig{0};
   Node *head = new Node(0);
   Node *current = head;
+  bool mt9 = false; // true jeśli z poprzedniego dodawanie przekroczyliśmy 9
 
   while (list1 || list2)
   {
@@ -283,21 +288,110 @@ Node *my_add(Node *list1, Node *list2)
       nbtwo = list2->data;
       list2 = list2->next;
     }
-    sum = nbone + nbtwo;
+    if (mt9)
+      sum = current->data + nbone + nbtwo;
+    else
+      sum = nbone + nbtwo;
+
     if (sum > 9)
     {
       firstDig = sum % 10;
-      current->data += firstDig;
+      current->data = firstDig;
+      mt9 = true;
       my_insert(current, 1);
     }
     else
     {
-      current->data += sum;
+      current->data = sum;
+      mt9 = false;
 
       // jeśli będziemy jeszcze dodawać
       if (list1 || list2)
         my_insert(current, 0);
     }
+  }
+
+  return head;
+}
+
+Node *my_add2(Node *list1, Node *list2)
+{
+  long nbone{0}, nbtwo{0}, dec{0};
+
+  while (list1 || list2)
+  {
+    if (list1)
+    {
+      nbone += list1->data * pow(10, dec);
+      list1 = list1->next;
+    }
+    if (list2)
+    {
+      nbtwo += list2->data * pow(10, dec);
+      list2 = list2->next;
+    }
+    dec++;
+  }
+
+  int sum = nbone + nbtwo;
+  dec--;
+
+  Node *head = nullptr;
+  while (dec >= 0)
+  {
+    Node *temp = new Node(sum / pow(10, dec));
+    sum -= temp->data * pow(10, dec);
+
+    if (head)
+      temp->next = head;
+    head = temp;
+
+    dec--;
+  }
+
+  return head;
+}
+
+pair<int, int> getNumberRecur(Node *list)
+{
+  if (!list)
+    return make_pair(0, 0);
+
+  // decimal, sum
+  pair<int, int> result;
+  if (list->next)
+    result = getNumberRecur(list->next);
+
+  int num = list->data * pow(10, result.first);
+  return make_pair(result.first + 1, result.second + num);
+}
+
+Node *my_add_recursive2(Node *list1, Node *list2)
+{
+  // decimal, number
+  pair<int, int> nbone = getNumberRecur(list1);
+  pair<int, int> nbtwo = getNumberRecur(list2);
+
+  int sum = nbone.second + nbtwo.second;
+  int dec = max(nbone.first, nbtwo.first);
+
+  Node *head = nullptr;
+  Node *prev = nullptr;
+  while (dec >= 0)
+  {
+    Node *temp = new Node(sum / pow(10, dec));
+    sum -= temp->data * pow(10, dec);
+
+    if (!head)
+    {
+      head = temp;
+      prev = temp;
+    }
+
+    prev->next = temp;
+    prev = temp;
+
+    dec--;
   }
 
   return head;
@@ -315,7 +409,7 @@ int main()
 
   // making list2 for number 295
   Node *list2 = nullptr;
-  insert(list2, 2);
+  insert(list2, 3);
   insert(list2, 9);
   insert(list2, 5);
   std::cout << "List2:  ";
@@ -365,7 +459,7 @@ int main()
   list5 = add_followup(list1, list2);
   std::cout << "My solution\n";
   std::cout << "List5:  ";
-  list5 = my_add(list1, list2);
+  list5 = my_add_recursive2(list1, list2);
   printList(list5);
 
   deleteList(list1);
